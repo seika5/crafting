@@ -34,9 +34,22 @@ router.get('/augments', async (req, res) => {
     }
 });
 
+function distributeStatPoints(totalStatPoints, numCategories) {
+    let remaining = totalStatPoints;
+    const counts = new Array(numCategories).fill(0);
+    for (let i = 0; i < totalStatPoints && remaining > 0; i++) {
+        const idx = Math.floor(Math.random() * numCategories);
+        const add = Math.min(remaining, Math.floor(Math.random() * 10 + 1));
+        counts[idx] += add;
+        remaining -= add;
+    }
+    return counts;
+}
+
 // Crafting logic for the rifle
 function craftRifle(materials, augments) {
     let totalStatPoints = 0;
+    let totalElementPoints = 0;
     let totalEffectPoints = 0;
     let totalElementalChancePoints = 0;
     let elementalDistributions = []; // 2D array to hold elemental distributions for triplets
@@ -49,6 +62,7 @@ function craftRifle(materials, augments) {
     // Pool stats from materials
     materials.forEach((material, index) => {
         totalStatPoints += material.stat_points;
+        totalElementPoints += material.element_points;
         totalEffectPoints += material.effect_points;
         totalElementalChancePoints += material.elemental_chance_points;
 
@@ -70,6 +84,8 @@ function craftRifle(materials, augments) {
             totalElementalChancePoints += augment.magnitude;
         }
     });
+
+    let stats = distributeStatPoints(totalStatPoints, 7);
 
     // Determine elemental effects for each consecutive triplet
     const elementalEffects = [];
@@ -93,7 +109,14 @@ function craftRifle(materials, augments) {
     }
 
     return {
-        statPoints: totalStatPoints,
+        damage: stats[0],
+        fireRate: stats[1],
+        accuracy: stats[2],
+        magazineCapacity: stats[3],
+        handlingReload: stats[4],
+        handlingMovement: stats[5],
+        range: stats[6],
+        elementPoints: totalElementPoints,
         effectPoints: totalEffectPoints,
         elementalChancePoints: totalElementalChancePoints,
         elementalEffects
